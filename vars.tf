@@ -116,3 +116,7 @@ variable "naming_convention" {
   description = "Naming convention for the resources"
   type        = string
 }
+variable "registry_server" {
+  description = "The Azure Container Registry server name"
+  type        = string
+}
