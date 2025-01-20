@@ -46,7 +46,7 @@ output "environment_variables" {
 # Tags
 output "tags" {
   description = "Tags applied to the resources"
-  value       = local.common_tags
+  value       = var.common_tags
 }
 
 # Important URLs - Highlighted
