@@ -30,6 +30,10 @@ data "azapi_resource" "container_app_environment" {
   response_export_values = ["properties.customDomainConfiguration.customDomainVerificationId"]
 }
 
+locals {
+  domain_verification_id = jsondecode(data.azapi_resource.container_app_environment.output.properties).customDomainConfiguration.customDomainVerificationId
+}
+
 # Grab the DNS Zone
 data "azurerm_dns_zone" "container_zone" {
   name                = var.dns_zone_name
@@ -37,8 +41,6 @@ data "azurerm_dns_zone" "container_zone" {
 }
 
 #direct container url DNS record creation 
-
-
 resource "azurerm_dns_cname_record" "container_app" {
   count               = var.front_door_enable ? 0 : 1
   name                = var.dns_website_name
@@ -48,7 +50,6 @@ resource "azurerm_dns_cname_record" "container_app" {
   record              = "${replace(var.container_app_name,"-","")}.${azurerm_container_app_environment.container_app_env.default_domain}"
 }
 
-
 resource "azurerm_dns_txt_record" "verification" {
   count               = var.front_door_enable ? 0 : 1
   name                = "asuid.${var.dns_website_name}"
@@ -57,7 +58,7 @@ resource "azurerm_dns_txt_record" "verification" {
   ttl                 = 300
 
   record {
-    value = jsondecode(data.azapi_resource.container_app_environment.output).properties.customDomainConfiguration.customDomainVerificationId
+    value = local.domain_verification_id
   }
 }
 
@@ -93,8 +94,8 @@ resource "azurerm_container_app" "container_app" {
     container {
       name   = var.container_app_name
       image  = "${var.registry_server}/${var.ghcr_image}"
-      cpu    = "1.5"
-      memory = "3Gi"
+      cpu    = var.container_cpu
+      memory = var.container_memory
 
       dynamic "env" {
         for_each = var.container_env_vars
@@ -119,8 +120,14 @@ resource "azurerm_container_app" "container_app" {
 }
 
 resource "azurerm_container_app_custom_domain" "custom_domain" {
+  count            = var.front_door_enable ? 0 : 1
   name             = "${var.dns_website_name}.${var.dns_zone_name}"
   container_app_id = azurerm_container_app.container_app.id
+
+  depends_on = [
+    azurerm_dns_cname_record.container_app,
+    azurerm_dns_txt_record.verification
+  ]
 
   lifecycle {
     ignore_changes = [
