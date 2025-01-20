@@ -4,18 +4,13 @@ variable "location" {
     default     = "eastus"
 }
 
+variable "resource_group_name" {
+  description = "Resource group name"
+  type        = string
+}
+
 variable "environment" {
   description = "Deployment environment (e.g., dev, staging, production)"
-  type        = string
-}
-
-variable "registry_server" {
-  description = "The Azure Container Registry server name"
-  type        = string
-}
-
-variable "image_name" {
-  description = "Docker image name including tag"
   type        = string
 }
 
@@ -37,6 +32,12 @@ variable "container_listening_port" {
     default     = 3000
 }
 
+variable "common_tags" {
+  description = "Common tags to add to all resources"
+  type        = map(string)
+  default     = {}
+}
+
 variable "additional_tags" {
   description = "Additional tags to add to all resources"
   type        = map(string)
@@ -49,85 +50,11 @@ variable "project" {
   default     = "SoS"
 }
 
-variable "application_id" {
-  description = "Application ID"
-  type        = string
-  default     = "sos"
-}
-
-variable "application_owner" {
-  description = "Application owner name"
-  type        = string
-  default     = "Philip Sessa"
-}
-
-variable "application_owner_email" {
-  description = "Email address of the application owner"
-  type        = string
-    default     = "sessapm@gmail.com"
-}
-
-variable "application_team" {
-  description = "Name of the application team"
-  type        = string
-  default     = "SOS ICN App Team"
-}
-
-variable "application_team_email" {
-  description = "Email address of the application team"
-  type        = string
-    default     = "support@sailorstay.com"
-}
-
-variable "application_team_slack" {
-  description = "Slack channel of the application team"
-  type        = string
-    default     = "myteam"
-}
-
-variable "application_teams_channel" {
-  description = "Microsoft Teams channel for the application"
-  type        = string
-    default     = "myteam"
-}
-
-variable "NEXT_PUBLIC_TEMPLATE_CLIENT_ID" {
-  description = "Client ID for the application template"
-  type        = string
-  default     = "123456"
-}
-
-
-variable "cost_center" {
-  description = "Cost center for billing purposes"
-  type        = string
-    default     = "12345"
-}
-
-variable "compliance" {
-  description = "Compliance level for the resources"
-  type        = string
-  default     = "none"
-}
-
 variable "count_number" {
   description = "An identifier for multiple deployments in the same environment"
   type        = number
   default     = 1
 }
-
-variable "external" {
-  description = "Indicates whether the resource is for external use"
-  type        = string
-  default     = "false"
-}
-
-variable "description" {
-  description = "Description of the project"
-  type        = string
-  default     = ""
-}
-
 
 variable "ghcr_image" {
   description = "The Docker image from GitHub Container Registry, including the tag"
@@ -173,4 +100,19 @@ variable "container_env_vars" {
   description = "Environment variables for the container app"
   type = map(string)
   default = {}
+}
+
+variable "container_app_name" {
+  description = "Container app name"
+  type        = string
+}
+
+variable "log_analytics_workspace_name" {
+  description = "Log analytics workspace name"
+  type        = string
+}
+
+variable "naming_convention" {
+  description = "Naming convention for the resources"
+  type        = string
 }

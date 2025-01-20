@@ -1,26 +1,26 @@
 resource "azurerm_resource_group" "resource_group" {
-  name     = local.resource_group_name
+  name     = var.resource_group_name
   location = var.location
-  tags     = local.common_tags
+  tags     = var.common_tags
 }
 
 # Create Log Analytics Workspace
 resource "azurerm_log_analytics_workspace" "law" {
-  name                = "${local.naming_convention}law"
+  name                = "${var.naming_convention}law"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = var.location
   sku                 = "PerGB2018"
   retention_in_days   = 30
-  tags                = local.common_tags
+  tags                = var.common_tags
 }
 
 # Azure Container App Environment
 resource "azurerm_container_app_environment" "container_app_env" {
-  name                       = "${local.container_app_name}-env"
+  name                       = "${var.container_app_name}-env"
   location                   = var.location
   resource_group_name        = azurerm_resource_group.resource_group.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
-  tags                       = local.common_tags
+  tags                       = var.common_tags
 }
 
 # Grab the container DNS verification ID
@@ -45,7 +45,7 @@ resource "azurerm_dns_cname_record" "container_app" {
   zone_name           = data.azurerm_dns_zone.container_zone.name
   resource_group_name = data.azurerm_dns_zone.container_zone.resource_group_name
   ttl                 = 300
-  record              = "${replace(local.container_app_name,"-","")}.${azurerm_container_app_environment.container_app_env.default_domain}"
+  record              = "${replace(var.container_app_name,"-","")}.${azurerm_container_app_environment.container_app_env.default_domain}"
 }
 
 
@@ -63,11 +63,11 @@ resource "azurerm_dns_txt_record" "verification" {
 
 # Azure Container App
 resource "azurerm_container_app" "container_app" {
-  name                         = replace(local.container_app_name, "-", "")
+  name                         = replace(var.container_app_name, "-", "")
   container_app_environment_id = azurerm_container_app_environment.container_app_env.id
   resource_group_name          = azurerm_resource_group.resource_group.name
   revision_mode                = "Single"
-  tags                         = local.common_tags
+  tags                         = var.common_tags
 
   secret {
     name  = "registry-password"
@@ -91,7 +91,7 @@ resource "azurerm_container_app" "container_app" {
 
   template {
     container {
-      name   = local.container_app_name
+      name   = var.container_app_name
       image  = "${var.registry_server}/${var.ghcr_image}"
       cpu    = "1.5"
       memory = "3Gi"
