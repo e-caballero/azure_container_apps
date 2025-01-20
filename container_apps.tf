@@ -31,7 +31,8 @@ data "azapi_resource" "container_app_environment" {
 }
 
 locals {
-  domain_verification_id = data.azapi_resource.container_app_environment.output.properties.customDomainConfiguration.customDomainVerificationId
+  verification_response = jsondecode(data.azapi_resource.container_app_environment.output)
+  domain_verification_id = local.verification_response.properties.customDomainConfiguration.customDomainVerificationId
 }
 
 # Grab the DNS Zone
