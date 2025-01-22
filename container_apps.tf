@@ -21,6 +21,15 @@ resource "azurerm_container_app_environment" "container_app_env" {
   resource_group_name        = azurerm_resource_group.resource_group.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   tags                       = var.common_tags
+
+ #ignore certificate created manually
+  lifecycle {
+    ignore_changes = [
+      certificate_binding_type,
+      container_app_environment_certificate_id
+    ]
+  }
+
 }
 
 # Grab the container DNS verification ID
