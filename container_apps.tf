@@ -129,14 +129,15 @@ resource "azurerm_container_app" "container_app" {
 # Create managed certificate using azapi
 resource "azapi_resource" "managed_certificate" {
   count = var.front_door_enable ? 0 : 1
-  type  = "Microsoft.App/managedEnvironments/certificates@2024-03-01"
+  type  = "Microsoft.App/managedEnvironments/managedCertificates@2024-03-01"
   name  = "${var.dns_website_name}-cert"
   parent_id = azurerm_container_app_environment.container_app_env.id
   location = var.location
 
   body = jsonencode({
     properties = {
-      value = "${var.dns_website_name}.${var.dns_zone_name}"
+      subjectName = "${var.dns_website_name}.${var.dns_zone_name}",
+      domainControlValidation = "CNAME"
     }
   })
 }
