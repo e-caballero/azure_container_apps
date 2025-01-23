@@ -81,7 +81,6 @@ resource "azurerm_container_app" "container_app" {
   dynamic "secret" {
     for_each = var.container_env_vars
     content {
-      # Convert the name to lowercase and replace invalid characters
       name  = lower(replace(replace(secret.key, "_", "-"), "/[^a-zA-Z0-9-]/", ""))
       value = sensitive(secret.value)
     }
@@ -114,6 +113,11 @@ resource "azurerm_container_app" "container_app" {
   ingress {
     external_enabled = true
     target_port     = var.container_listening_port
+    custom_domain {
+      name                                      = "${var.dns_website_name}.${var.dns_zone_name}"
+      certificate_binding_type                  = "SniEnabled"
+      certificate_id                           = "${azurerm_container_app_environment.container_app_env.id}/certificates/${azapi_resource.managed_certificate[0].name}"
+    }
 
     traffic_weight {
       percentage      = 100
