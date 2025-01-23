@@ -126,17 +126,17 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
   count            = var.front_door_enable ? 0 : 1
   name             = "${var.dns_website_name}.${var.dns_zone_name}"
   container_app_id = azurerm_container_app.container_app.id
+  certificate_binding_type = "SniEnabled"
+  certificate_id          = azapi_resource.managed_certificate[0].id
 
   depends_on = [
     azurerm_dns_cname_record.container_app,
-    azurerm_dns_txt_record.verification
+    azurerm_dns_txt_record.verification,
+    azapi_resource.managed_certificate
   ]
 
   lifecycle {
-    ignore_changes = [
-      certificate_binding_type,
-      container_app_environment_certificate_id
-    ]
+    ignore_changes = []
   }
 }
 
@@ -154,26 +154,4 @@ resource "azapi_resource" "managed_certificate" {
       domainControlValidation = "CNAME"
     }
   })
-
-  depends_on = [
-    azurerm_container_app_custom_domain.custom_domain
-  ]
-}
-
-# Bind the certificate to the custom domain
-resource "azapi_update_resource" "bind_certificate" {
-  count = var.front_door_enable ? 0 : 1
-  type  = "Microsoft.App/containerApps/customDomains@2024-03-01"
-  resource_id = "${azurerm_container_app.container_app.id}/customDomains/${replace(azurerm_container_app_custom_domain.custom_domain[0].name, ".", "-")}"
-
-  body = jsonencode({
-    properties = {
-      certificateId = azapi_resource.managed_certificate[0].id
-      bindingType   = "SniEnabled"
-    }
-  })
-
-  depends_on = [
-    azapi_resource.managed_certificate
-  ]
 }
