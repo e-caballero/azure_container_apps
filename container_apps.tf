@@ -142,7 +142,7 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
   container_app_id         = azurerm_container_app.container_app.id
   name                     = "${var.dns_website_name}.${var.dns_zone_name}"
   certificate_binding_type = "SniEnabled"
-  container_app_environment_certificate_id = "${azurerm_container_app_environment.container_app_env.id}/certificates/${azapi_resource.managed_certificate[0].name}"
+  #container_app_environment_certificate_id = "${azurerm_container_app_environment.container_app_env.id}/certificates/${azapi_resource.managed_certificate[0].name}"
 
   depends_on = [
     azurerm_dns_cname_record.container_app,
