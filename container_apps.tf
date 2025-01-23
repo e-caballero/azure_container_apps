@@ -128,12 +128,6 @@ resource "azapi_resource" "managed_certificate" {
   parent_id = azurerm_container_app_environment.container_app_env.id
   location = var.location
 
-  body = jsonencode({
-    properties = {
-      password = ""
-      value = ""
-    }
-  })
 }
 
 resource "azurerm_container_app_custom_domain" "custom_domain" {
