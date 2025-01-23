@@ -120,23 +120,23 @@ resource "azurerm_container_app" "container_app" {
   }
 }
 
-resource "azurerm_container_app_custom_domain" "custom_domain" {
-  count            = var.front_door_enable ? 0 : 1
-  name             = "${var.dns_website_name}.${var.dns_zone_name}"
-  container_app_id = azurerm_container_app.container_app.id
-
-  depends_on = [
-    azurerm_dns_cname_record.container_app,
-    azurerm_dns_txt_record.verification
-  ]
-
-  lifecycle {
-    ignore_changes = [
-      certificate_binding_type,
-      container_app_environment_certificate_id
-    ]
-  }
-}
+#resource "azurerm_container_app_custom_domain" "custom_domain" {
+#  count            = var.front_door_enable ? 0 : 1
+#  name             = "${var.dns_website_name}.${var.dns_zone_name}"
+#  container_app_id = azurerm_container_app.container_app.id
+#
+#  depends_on = [
+#    azurerm_dns_cname_record.container_app,
+#    azurerm_dns_txt_record.verification
+#  ]
+#
+#  lifecycle {
+#    ignore_changes = [
+#      certificate_binding_type,
+#      container_app_environment_certificate_id
+#    ]
+#  }
+#}
 
 # Create managed certificate using azapi
 resource "azapi_resource" "managed_certificate" {
@@ -153,7 +153,7 @@ resource "azapi_resource" "managed_certificate" {
     }
   })
 
-  depends_on = [
-    azurerm_container_app_custom_domain.custom_domain
-  ]
+  #depends_on = [
+  #  azurerm_container_app_custom_domain.custom_domain
+  #]
 }
