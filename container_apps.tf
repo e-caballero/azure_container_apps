@@ -112,16 +112,20 @@ resource "azurerm_container_app" "container_app" {
   ingress {
     external_enabled = true
     target_port     = var.container_listening_port
-    custom_domain {
-      name                     = "${var.dns_website_name}.${var.dns_zone_name}"
-      certificate_binding_type = "SniEnabled"
-    }
 
     traffic_weight {
       percentage      = 100
       latest_revision = true
     }
   }
+}
+
+# Create binding validation first
+resource "azurerm_container_app_environment_custom_domain" "domain" {
+  count                         = var.front_door_enable ? 0 : 1
+  name                          = "${var.dns_website_name}.${var.dns_zone_name}"
+  container_app_environment_id  = azurerm_container_app_environment.container_app_env.id
+  validation_method            = "http"
 
   depends_on = [
     azurerm_dns_cname_record.container_app,
@@ -140,12 +144,12 @@ resource "azapi_resource" "managed_certificate" {
   body = jsonencode({
     properties = {
       subjectName = "${var.dns_website_name}.${var.dns_zone_name}",
-      domainControlValidation = "CNAME"
+      domainControlValidation = "HTTP"
     }
   })
 
   depends_on = [
-    azurerm_container_app.container_app
+    azurerm_container_app_environment_custom_domain.domain
   ]
 }
 
