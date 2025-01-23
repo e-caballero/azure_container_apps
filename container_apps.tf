@@ -126,6 +126,10 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
   name             = "${var.dns_website_name}.${var.dns_zone_name}"
   container_app_id = azurerm_container_app.container_app.id
 
+  certificate {
+    binding_type = "Disabled"
+  }
+
   depends_on = [
     azurerm_dns_cname_record.container_app,
     azurerm_dns_txt_record.verification
