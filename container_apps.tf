@@ -134,6 +134,14 @@ resource "azapi_resource" "managed_certificate" {
   parent_id = azurerm_container_app_environment.container_app_env.id
   location = var.location
 
+  body = jsonencode({
+    properties = {
+      value = "${var.dns_website_name}.${var.dns_zone_name}"
+    }
+  })
+
+  schema_validation_enabled = false
+  ignore_missing_property = true
 }
 
 resource "azurerm_container_app_custom_domain" "custom_domain" {
