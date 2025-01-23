@@ -147,11 +147,4 @@ resource "azapi_resource" "managed_certificate" {
   name  = "${var.dns_website_name}-cert"
   parent_id = azurerm_container_app_environment.container_app_env.id
   location = var.location
-
-  body = jsonencode({
-    properties = {
-      password = ""
-      value = ""
-    }
-  })
 }
