@@ -120,19 +120,6 @@ resource "azurerm_container_app" "container_app" {
   }
 }
 
-# Create custom domain binding first
-resource "azurerm_container_app_custom_domain" "custom_domain" {
-  count                    = var.front_door_enable ? 0 : 1
-  container_app_id         = azurerm_container_app.container_app.id
-  name                     = "${var.dns_website_name}.${var.dns_zone_name}"
-  certificate_binding_type = "Disabled"
-
-  depends_on = [
-    azurerm_dns_cname_record.container_app,
-    azurerm_dns_txt_record.verification
-  ]
-}
-
 # Create managed certificate using azapi
 resource "azapi_resource" "managed_certificate" {
   count = var.front_door_enable ? 0 : 1
@@ -147,55 +134,19 @@ resource "azapi_resource" "managed_certificate" {
       domainControlValidation = "HTTP"
     }
   })
-
-  depends_on = [
-    azurerm_container_app_custom_domain.custom_domain
-  ]
 }
 
-# Update the container app with the certificate
-resource "azurerm_container_app" "container_app_certificate_update" {
-  count = var.front_door_enable ? 0 : 1
-  name                         = azurerm_container_app.container_app.name
-  container_app_environment_id = azurerm_container_app.container_app.container_app_environment_id
-  resource_group_name          = azurerm_container_app.container_app.resource_group_name
-  revision_mode                = azurerm_container_app.container_app.revision_mode
-  tags                         = azurerm_container_app.container_app.tags
-
-  template {
-    container {
-      name   = var.container_app_name
-      image  = "${var.registry_server}/${var.ghcr_image}"
-      cpu    = var.container_cpu
-      memory = var.container_memory
-
-      dynamic "env" {
-        for_each = var.container_env_vars
-        content {
-          name        = env.key
-          secret_name = lower(replace(replace(env.key, "_", "-"), "/[^a-zA-Z0-9-]/", ""))
-          value       = sensitive(env.value)
-        }
-      }
-    }
-  }
-
-  ingress {
-    external_enabled = true
-    target_port     = var.container_listening_port
-    custom_domain {
-      name                     = "${var.dns_website_name}.${var.dns_zone_name}"
-      certificate_binding_type = "SniEnabled"
-      certificate_id          = "${azurerm_container_app_environment.container_app_env.id}/managedCertificates/${azapi_resource.managed_certificate[0].name}"
-    }
-
-    traffic_weight {
-      percentage      = 100
-      latest_revision = true
-    }
-  }
+# Create custom domain binding with certificate
+resource "azurerm_container_app_custom_domain" "custom_domain" {
+  count                    = var.front_door_enable ? 0 : 1
+  container_app_id         = azurerm_container_app.container_app.id
+  name                     = "${var.dns_website_name}.${var.dns_zone_name}"
+  certificate_binding_type = "SniEnabled"
+  certificate_id          = "${azurerm_container_app_environment.container_app_env.id}/certificates/${azapi_resource.managed_certificate[0].name}"
 
   depends_on = [
+    azurerm_dns_cname_record.container_app,
+    azurerm_dns_txt_record.verification,
     azapi_resource.managed_certificate
   ]
 }
