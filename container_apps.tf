@@ -127,7 +127,7 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
   name             = "${var.dns_website_name}.${var.dns_zone_name}"
   container_app_id = azurerm_container_app.container_app.id
   certificate_binding_type = "SniEnabled"
-  container_app_environment_certificate_id = azapi_resource.managed_certificate[0].id
+  container_app_environment_certificate_id = azapi_resource.managed_certificate[0]
 
   depends_on = [
     azurerm_dns_cname_record.container_app,
