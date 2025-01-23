@@ -120,30 +120,40 @@ resource "azurerm_container_app" "container_app" {
   }
 }
 
-# Create managed certificate using azapi
-resource "azapi_resource" "managed_certificate" {
-  count = var.front_door_enable ? 0 : 1
-  type  = "Microsoft.App/managedEnvironments/certificates@2024-03-01"
-  name  = "${var.dns_website_name}-cert"
-  parent_id = azurerm_container_app_environment.container_app_env.id
-  location = var.location
-
-}
-
 resource "azurerm_container_app_custom_domain" "custom_domain" {
   count            = var.front_door_enable ? 0 : 1
   name             = "${var.dns_website_name}.${var.dns_zone_name}"
   container_app_id = azurerm_container_app.container_app.id
-  certificate_binding_type = "SniEnabled"
-  #container_app_environment_certificate_id = azapi_resource.managed_certificate[0].id
 
   depends_on = [
     azurerm_dns_cname_record.container_app,
-    azurerm_dns_txt_record.verification,
-    azapi_resource.managed_certificate
+    azurerm_dns_txt_record.verification
   ]
 
   lifecycle {
-    ignore_changes = []
+    ignore_changes = [
+      certificate_binding_type,
+      container_app_environment_certificate_id
+    ]
   }
+}
+
+# Create managed certificate using azapi
+resource "azapi_resource" "managed_certificate" {
+  count = var.front_door_enable ? 0 : 1
+  type  = "Microsoft.App/managedEnvironments/managedCertificates@2024-03-01"
+  name  = "${var.dns_website_name}-cert"
+  parent_id = azurerm_container_app_environment.container_app_env.id
+  location = var.location
+
+  body = jsonencode({
+    properties = {
+      subjectName = "${var.dns_website_name}.${var.dns_zone_name}"
+      domainControlValidation = "CNAME"
+    }
+  })
+
+  depends_on = [
+    azurerm_container_app_custom_domain.custom_domain
+  ]
 }
