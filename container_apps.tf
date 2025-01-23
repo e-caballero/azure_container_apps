@@ -137,16 +137,12 @@ resource "azapi_resource" "managed_certificate" {
   })
 }
 
-locals {
-  certificate_id = var.front_door_enable ? null : "${azurerm_container_app_environment.container_app_env.id}/certificates/${var.dns_website_name}-cert"
-}
-
 resource "azurerm_container_app_custom_domain" "custom_domain" {
   count            = var.front_door_enable ? 0 : 1
   name             = "${var.dns_website_name}.${var.dns_zone_name}"
   container_app_id = azurerm_container_app.container_app.id
   certificate_binding_type = "SniEnabled"
-  container_app_environment_certificate_id = local.certificate_id
+  container_app_environment_certificate_id = var.front_door_enable ? null : "${azurerm_container_app_environment.container_app_env.id}/certificates/${azapi_resource.managed_certificate[0].name}"
 
   depends_on = [
     azurerm_dns_cname_record.container_app,
