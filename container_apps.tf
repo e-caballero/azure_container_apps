@@ -134,14 +134,6 @@ resource "azapi_resource" "managed_certificate" {
   parent_id = azurerm_container_app_environment.container_app_env.id
   location = var.location
 
-  body = jsonencode({
-    properties = {
-      value = "${var.dns_website_name}.${var.dns_zone_name}"
-    }
-  })
-
-  schema_validation_enabled = false
-  ignore_missing_property = true
 }
 
 resource "azurerm_container_app_custom_domain" "custom_domain" {
@@ -149,7 +141,7 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
   name             = "${var.dns_website_name}.${var.dns_zone_name}"
   container_app_id = azurerm_container_app.container_app.id
   certificate_binding_type = "SniEnabled"
-  container_app_environment_certificate_id = var.front_door_enable ? null : "${azurerm_container_app_environment.container_app_env.id}/certificates/${azapi_resource.managed_certificate[0].name}"
+  #container_app_environment_certificate_id = var.front_door_enable ? null : "${azurerm_container_app_environment.container_app_env.id}/certificates/${azapi_resource.managed_certificate[0].name}"
 
   depends_on = [
     azurerm_dns_cname_record.container_app,
