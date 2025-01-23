@@ -80,7 +80,6 @@ resource "azurerm_container_app" "container_app" {
   dynamic "secret" {
     for_each = var.container_env_vars
     content {
-      # Convert the name to lowercase and replace invalid characters
       name  = lower(replace(replace(secret.key, "_", "-"), "/[^a-zA-Z0-9-]/", ""))
       value = sensitive(secret.value)
     }
@@ -113,19 +112,16 @@ resource "azurerm_container_app" "container_app" {
   ingress {
     external_enabled = true
     target_port     = var.container_listening_port
-    
+    custom_domain {
+      name                     = "${var.dns_website_name}.${var.dns_zone_name}"
+      certificate_binding_type = "SniEnabled"
+    }
+
     traffic_weight {
       percentage      = 100
       latest_revision = true
     }
   }
-}
-
-resource "azurerm_container_app_custom_domain" "custom_domain" {
-  count            = var.front_door_enable ? 0 : 1
-  name             = "${var.dns_website_name}.${var.dns_zone_name}"
-  container_app_id = azurerm_container_app.container_app.id
-  certificate_binding_type = "SniEnabled"
 
   depends_on = [
     azurerm_dns_cname_record.container_app,
@@ -149,11 +145,11 @@ resource "azapi_resource" "managed_certificate" {
   })
 
   depends_on = [
-    azurerm_container_app_custom_domain.custom_domain
+    azurerm_container_app.container_app
   ]
 }
 
-# Update the container app to use the managed certificate
+# Update the container app with the certificate
 resource "azurerm_container_app" "container_app_certificate_update" {
   count = var.front_door_enable ? 0 : 1
   name                         = azurerm_container_app.container_app.name
