@@ -22,6 +22,7 @@ resource "azurerm_container_app_environment" "container_app_env" {
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   tags                       = var.common_tags
 
+
 }
 
 # Grab the container DNS verification ID
@@ -62,64 +63,6 @@ resource "azurerm_dns_txt_record" "verification" {
   record {
     value = local.domain_verification_id
   }
-}
-
-# First create the custom domain binding without certificate
-resource "azapi_resource" "custom_domain" {
-  count     = var.front_door_enable ? 0 : 1
-  type      = "Microsoft.App/containerApps/customDomains@2024-03-01"
-  name      = "${var.dns_website_name}.${var.dns_zone_name}"
-  parent_id = azurerm_container_app.container_app.id
-
-  body = jsonencode({
-    properties = {
-      bindingType = "Disabled"  # Start with disabled binding
-      domain = "${var.dns_website_name}.${var.dns_zone_name}"
-    }
-  })
-
-  depends_on = [
-    azurerm_dns_cname_record.container_app,
-    azurerm_dns_txt_record.verification
-  ]
-}
-
-# Then create the managed certificate
-resource "azapi_resource" "managed_certificate" {
-  type      = "Microsoft.App/managedEnvironments/managedCertificates@2024-03-01"
-  name      = "${var.dns_website_name}-cert"
-  parent_id = azurerm_container_app_environment.container_app_env.id
-  location  = var.location
-
-  body = jsonencode({
-    properties = {
-      subjectName             = "${var.dns_website_name}.${var.dns_zone_name}"
-      domainControlValidation = "CNAME"
-    }
-  })
-
-  depends_on = [
-    azapi_resource.custom_domain
-  ]
-}
-
-# Finally update the custom domain with the certificate
-resource "azapi_update_resource" "update_custom_domain" {
-  count        = var.front_door_enable ? 0 : 1
-  type         = "Microsoft.App/containerApps/customDomains@2024-03-01"
-  resource_id  = azapi_resource.custom_domain[0].id
-
-  body = jsonencode({
-    properties = {
-      bindingType = "SniEnabled"
-      certificateId = azapi_resource.managed_certificate.id
-      domain = "${var.dns_website_name}.${var.dns_zone_name}"
-    }
-  })
-
-  depends_on = [
-    azapi_resource.managed_certificate
-  ]
 }
 
 # Azure Container App
@@ -177,4 +120,60 @@ resource "azurerm_container_app" "container_app" {
       latest_revision = true
     }
   }
+}
+
+resource "azurerm_container_app_custom_domain" "custom_domain" {
+  count            = var.front_door_enable ? 0 : 1
+  name             = "${var.dns_website_name}.${var.dns_zone_name}"
+  container_app_id = azurerm_container_app.container_app.id
+
+  depends_on = [
+    azurerm_dns_cname_record.container_app,
+    azurerm_dns_txt_record.verification
+  ]
+
+  lifecycle {
+    ignore_changes = [
+      certificate_binding_type,
+      container_app_environment_certificate_id
+    ]
+  }
+}
+
+# Create managed certificate using azapi
+resource "azapi_resource" "managed_certificate" {
+  count = var.front_door_enable ? 0 : 1
+  type  = "Microsoft.App/managedEnvironments/managedCertificates@2024-03-01"
+  name  = "${var.dns_website_name}-cert"
+  parent_id = azurerm_container_app_environment.container_app_env.id
+  location = var.location
+
+  body = jsonencode({
+    properties = {
+      subjectName = "${var.dns_website_name}.${var.dns_zone_name}"
+      domainControlValidation = "CNAME"
+    }
+  })
+
+  depends_on = [
+    azurerm_container_app_custom_domain.custom_domain
+  ]
+}
+
+# Bind the certificate to the custom domain
+resource "azapi_update_resource" "bind_certificate" {
+  count = var.front_door_enable ? 0 : 1
+  type  = "Microsoft.App/containerApps/customDomains@2024-03-01"
+  resource_id = azurerm_container_app_custom_domain.custom_domain[0].id
+
+  body = jsonencode({
+    properties = {
+      certificateId = azapi_resource.managed_certificate[0].id
+      bindingType   = "SniEnabled"
+    }
+  })
+
+  depends_on = [
+    azapi_resource.managed_certificate
+  ]
 }
