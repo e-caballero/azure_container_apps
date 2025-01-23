@@ -136,10 +136,10 @@ resource "azapi_resource" "managed_certificate" {
 
   body = jsonencode({
     properties = {
-      password = ""
-      subject = "${var.dns_website_name}.${var.dns_zone_name}"
+      value = ""
+      certificateType = "Managed"
+      subjectName = "${var.dns_website_name}.${var.dns_zone_name}"
       domainControlValidation = "CNAME"
-      certificateFormatType = "Pfx"
     }
   })
 
