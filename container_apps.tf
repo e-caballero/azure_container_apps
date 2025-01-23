@@ -64,7 +64,27 @@ resource "azurerm_dns_txt_record" "verification" {
   }
 }
 
-# Create managed certificate using AzAPI provider
+# First create the custom domain binding without certificate
+resource "azapi_resource" "custom_domain" {
+  count     = var.front_door_enable ? 0 : 1
+  type      = "Microsoft.App/containerApps/customDomains@2024-03-01"
+  name      = "${var.dns_website_name}.${var.dns_zone_name}"
+  parent_id = azurerm_container_app.container_app.id
+
+  body = jsonencode({
+    properties = {
+      bindingType = "Disabled"  # Start with disabled binding
+      domain = "${var.dns_website_name}.${var.dns_zone_name}"
+    }
+  })
+
+  depends_on = [
+    azurerm_dns_cname_record.container_app,
+    azurerm_dns_txt_record.verification
+  ]
+}
+
+# Then create the managed certificate
 resource "azapi_resource" "managed_certificate" {
   type      = "Microsoft.App/managedEnvironments/managedCertificates@2024-03-01"
   name      = "${var.dns_website_name}-cert"
@@ -77,14 +97,17 @@ resource "azapi_resource" "managed_certificate" {
       domainControlValidation = "CNAME"
     }
   })
+
+  depends_on = [
+    azapi_resource.custom_domain
+  ]
 }
 
-# Create custom domain binding using AzAPI
-resource "azapi_resource" "custom_domain" {
-  count     = var.front_door_enable ? 0 : 1
-  type      = "Microsoft.App/containerApps/customDomains@2024-03-01"
-  name      = "${var.dns_website_name}.${var.dns_zone_name}"
-  parent_id = azurerm_container_app.container_app.id
+# Finally update the custom domain with the certificate
+resource "azapi_update_resource" "update_custom_domain" {
+  count        = var.front_door_enable ? 0 : 1
+  type         = "Microsoft.App/containerApps/customDomains@2024-03-01"
+  resource_id  = azapi_resource.custom_domain[0].id
 
   body = jsonencode({
     properties = {
@@ -95,8 +118,6 @@ resource "azapi_resource" "custom_domain" {
   })
 
   depends_on = [
-    azurerm_dns_cname_record.container_app,
-    azurerm_dns_txt_record.verification,
     azapi_resource.managed_certificate
   ]
 }
