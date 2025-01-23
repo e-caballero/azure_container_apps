@@ -22,13 +22,12 @@ resource "azurerm_container_app_environment" "container_app_env" {
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   tags                       = var.common_tags
 
-  #ignore certificate created manually
+  #ignore certificates created manually
   lifecycle {
     ignore_changes = [
-      certificate
+      certificates
     ]
   }
-
 }
 
 # Grab the container DNS verification ID
