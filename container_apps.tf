@@ -133,7 +133,6 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
 
   lifecycle {
     ignore_changes = [
-      certificate_id,
       certificate_binding_type
     ]
   }
