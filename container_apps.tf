@@ -130,13 +130,10 @@ resource "azapi_resource" "managed_certificate" {
 
   body = jsonencode({
     properties = {
-      value = "${var.dns_website_name}.${var.dns_zone_name}"
+      password = ""
+      value = ""
     }
   })
-}
-
-locals {
-  certificate_id = var.front_door_enable ? null : "${azurerm_container_app_environment.container_app_env.id}/certificates/${var.dns_website_name}-cert"
 }
 
 resource "azurerm_container_app_custom_domain" "custom_domain" {
