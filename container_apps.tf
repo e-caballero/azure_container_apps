@@ -136,7 +136,7 @@ resource "azapi_resource" "managed_certificate" {
 
   body = jsonencode({
     properties = {
-      subjectName = "${var.dns_website_name}.${var.dns_zone_name}"
+      value = "${var.dns_website_name}.${var.dns_zone_name}"
     }
   })
 
