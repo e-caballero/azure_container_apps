@@ -163,7 +163,7 @@ resource "azapi_resource" "managed_certificate" {
 # Bind the certificate to the custom domain
 resource "azapi_update_resource" "bind_certificate" {
   count = var.front_door_enable ? 0 : 1
-  type  = "Microsoft.App/containerApps/customDomains@2024-03-01"
+  type  = "Microsoft.App/containerApps/customDomainName@2024-03-01"
   resource_id = azurerm_container_app_custom_domain.custom_domain[0].id
 
   body = jsonencode({
