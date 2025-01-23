@@ -22,7 +22,6 @@ resource "azurerm_container_app_environment" "container_app_env" {
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   tags                       = var.common_tags
 
-
 }
 
 # Grab the container DNS verification ID
@@ -81,6 +80,7 @@ resource "azurerm_container_app" "container_app" {
   dynamic "secret" {
     for_each = var.container_env_vars
     content {
+      # Convert the name to lowercase and replace invalid characters
       name  = lower(replace(replace(secret.key, "_", "-"), "/[^a-zA-Z0-9-]/", ""))
       value = sensitive(secret.value)
     }
@@ -134,11 +134,6 @@ resource "azapi_resource" "managed_certificate" {
   parent_id = azurerm_container_app_environment.container_app_env.id
   location = var.location
 
-  body = jsonencode({
-    properties = {
-      value = "${var.dns_website_name}.${var.dns_zone_name}"
-    }
-  })
 }
 
 resource "azurerm_container_app_custom_domain" "custom_domain" {
