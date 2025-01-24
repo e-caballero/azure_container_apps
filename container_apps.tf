@@ -138,7 +138,7 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
     ignore_changes = [
       certificate_binding_type,
       container_app_environment_certificate_id
-    ],
+    ]
     replace_triggered_by = [
       terraform_data.replacement
     ]
