@@ -131,7 +131,8 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
 
   depends_on = [
     azurerm_dns_cname_record.container_app,
-    azurerm_dns_txt_record.verification
+    azurerm_dns_txt_record.verification,
+    terraform_data.replacement
   ]
 
   lifecycle {
@@ -143,9 +144,6 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
       terraform_data.replacement
     ]
   }
-  depends_on = [
-    terraform_data.replacement
-  ]
 }
 
 # Create managed certificate using azapi
