@@ -160,7 +160,7 @@ resource "azapi_resource" "managed_certificate" {
     }
   })
 
-  depends_on = [
-    azurerm_container_app_custom_domain.custom_domain
-  ]
+#  depends_on = [
+#    azurerm_container_app_custom_domain.custom_domain
+#  ]
 }
