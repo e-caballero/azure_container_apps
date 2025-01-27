@@ -142,6 +142,9 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
     replace_triggered_by = [
       terraform_data.replacement
     ]
+  depends_on = [
+    terraform_data.replacement
+  ]
   }
 }
 
@@ -160,7 +163,7 @@ resource "azapi_resource" "managed_certificate" {
     }
   })
 
-#  depends_on = [
-#    azurerm_container_app_custom_domain.custom_domain
-#  ]
+  depends_on = [
+    azurerm_container_app_custom_domain.custom_domain
+  ]
 }
