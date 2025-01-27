@@ -142,10 +142,10 @@ resource "azurerm_container_app_custom_domain" "custom_domain" {
     replace_triggered_by = [
       terraform_data.replacement
     ]
+  }
   depends_on = [
     terraform_data.replacement
   ]
-  }
 }
 
 # Create managed certificate using azapi
