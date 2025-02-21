@@ -1,5 +1,10 @@
+locals {
+
+}
+
 resource "azurerm_resource_group" "resource_group" {
-  name     = var.resource_group_name
+  #A name must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character and cannot have '--'. The length must not be more than 32 characters.
+  name     = local.formatted_rg_name
   location = var.location
   tags     = var.common_tags
 }
@@ -31,10 +36,6 @@ data "azapi_resource" "container_app_environment" {
   response_export_values = ["properties.customDomainConfiguration.customDomainVerificationId"]
 }
 
-locals {
-  verification_response = jsondecode(data.azapi_resource.container_app_environment.output)
-  domain_verification_id = local.verification_response.properties.customDomainConfiguration.customDomainVerificationId
-}
 
 # Grab the DNS Zone
 data "azurerm_dns_zone" "container_zone" {
