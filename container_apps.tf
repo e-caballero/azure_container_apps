@@ -93,7 +93,8 @@ resource "azurerm_container_app" "container_app" {
 
   template {
     container {
-      name   = var.container_app_name
+      # take the container name from the container_app_name variable and trim it to 32 characters or less A name must consist of lower case alphanumeric characters or '-', start with an alphabetic character,and end with an alphanumeric character and cannot have '--'. The length must not be more than 32 characters.
+      name   = substr(var.container_app_name, 0, 32)
       image  = "${var.registry_server}/${var.ghcr_image}"
       cpu    = var.container_cpu
       memory = var.container_memory
