@@ -1,32 +1,3 @@
-locals {
-  # Format names to meet requirements:
-  # - lowercase alphanumeric and hyphens only
-  # - start with letter
-  # - end with alphanumeric
-  # - no double hyphens
-  # - max 32 chars
-  formatted_name = function(name) {
-    lower(
-      substr(
-        replace(
-          replace(
-            replace(
-              name,
-              "--", "-"
-            ),
-            "/[^a-zA-Z0-9-]/", ""
-          ),
-          "/^[^a-zA-Z]+/", ""
-        ),
-        0,
-        32
-      )
-    )
-  }
-  formatted_rg_name = local.formatted_name(var.resource_group_name)
-  formatted_container_app_name = local.formatted_name(var.container_app_name)
-}
-
 resource "azurerm_resource_group" "resource_group" {
   #A name must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character and cannot have '--'. The length must not be more than 32 characters.
   name     = local.formatted_rg_name
