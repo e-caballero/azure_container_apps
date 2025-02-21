@@ -1,6 +1,4 @@
-locals {
 
-}
 
 resource "azurerm_resource_group" "resource_group" {
   #A name must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character and cannot have '--'. The length must not be more than 32 characters.
