@@ -1,4 +1,31 @@
-
+locals {
+  # Format names to meet requirements:
+  # - lowercase alphanumeric and hyphens only
+  # - start with letter
+  # - end with alphanumeric
+  # - no double hyphens
+  # - max 32 chars
+  formatted_name = function(name) {
+    lower(
+      substr(
+        replace(
+          replace(
+            replace(
+              name,
+              "--", "-"
+            ),
+            "/[^a-zA-Z0-9-]/", ""
+          ),
+          "/^[^a-zA-Z]+/", ""
+        ),
+        0,
+        32
+      )
+    )
+  }
+  formatted_rg_name = local.formatted_name(var.resource_group_name)
+  formatted_container_app_name = local.formatted_name(var.container_app_name)
+}
 
 resource "azurerm_resource_group" "resource_group" {
   #A name must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character and cannot have '--'. The length must not be more than 32 characters.
@@ -19,12 +46,11 @@ resource "azurerm_log_analytics_workspace" "law" {
 
 # Azure Container App Environment
 resource "azurerm_container_app_environment" "container_app_env" {
-  name                       = "${var.container_app_name}-env"
+  name                       = "${local.formatted_container_app_name}-env"
   location                   = var.location
   resource_group_name        = azurerm_resource_group.resource_group.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   tags                       = var.common_tags
-
 }
 
 # Grab the container DNS verification ID
@@ -33,7 +59,6 @@ data "azapi_resource" "container_app_environment" {
   type        = "Microsoft.App/managedEnvironments@2022-11-01-preview"
   response_export_values = ["properties.customDomainConfiguration.customDomainVerificationId"]
 }
-
 
 # Grab the DNS Zone
 data "azurerm_dns_zone" "container_zone" {
@@ -48,7 +73,7 @@ resource "azurerm_dns_cname_record" "container_app" {
   zone_name           = data.azurerm_dns_zone.container_zone.name
   resource_group_name = data.azurerm_dns_zone.container_zone.resource_group_name
   ttl                 = 300
-  record              = "${replace(var.container_app_name,"-","")}.${azurerm_container_app_environment.container_app_env.default_domain}"
+  record              = "${local.formatted_container_app_name}.${azurerm_container_app_environment.container_app_env.default_domain}"
 }
 
 resource "azurerm_dns_txt_record" "verification" {
@@ -65,7 +90,7 @@ resource "azurerm_dns_txt_record" "verification" {
 
 # Azure Container App
 resource "azurerm_container_app" "container_app" {
-  name                         = replace(var.container_app_name, "-", "")
+  name                         = local.formatted_container_app_name
   container_app_environment_id = azurerm_container_app_environment.container_app_env.id
   resource_group_name          = azurerm_resource_group.resource_group.name
   revision_mode                = "Single"
@@ -92,8 +117,7 @@ resource "azurerm_container_app" "container_app" {
 
   template {
     container {
-      # take the container name from the container_app_name variable and trim it to 32 characters or less A name must consist of lower case alphanumeric characters or '-', start with an alphabetic character,and end with an alphanumeric character and cannot have '--'. The length must not be more than 32 characters.
-      name   = substr(var.container_app_name, 0, 32)
+      name   = local.formatted_container_app_name
       image  = "${var.registry_server}/${var.ghcr_image}"
       cpu    = var.container_cpu
       memory = var.container_memory
