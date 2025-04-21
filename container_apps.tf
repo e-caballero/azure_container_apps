@@ -22,13 +22,6 @@ resource "azurerm_container_app_environment" "container_app_env" {
   resource_group_name        = azurerm_resource_group.resource_group.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   tags                       = var.common_tags
-  workload_profile_type      = "Consumption"
-  
-  workload_profile {
-    name          = "Consumption"
-    minimum_count = 0
-    maximum_count = 1
-  }
 }
 
 # Grab the container DNS verification ID
